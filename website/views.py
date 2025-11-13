@@ -1,58 +1,74 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from django.db.models import Q
 from funcionario.models import Funcionarios
 
-# Create your views here.
-
-
 def index(request):
-    return render(request, 'website/index.html')
-
-def listar_funcionarios(request):
+    q = request.GET.get('q', '')
     funcionarios = Funcionarios.objetos.all().order_by('id')
-    contexto = {"funcionarios": funcionarios}
+    if q:
+        funcionarios = funcionarios.filter(
+            Q(nome__icontains=q) |
+            Q(sobrenome__icontains=q) |
+            Q(cpf__icontains=q)
+        )
+    contexto = {
+        "titulo": "Funcionários de Bruna",
+        "funcionarios": funcionarios,
+        "q": q,
+        "total": funcionarios.count()
+    }
     return render(request, 'website/index.html', contexto)
 
-def detalhes_funcionario(request, id):
-    funcionario = get_object_or_404(Funcionarios, pk=id)
-    contexto = {"funcionario": funcionario}
-    return render(request, 'website/detalhesFuncionario.html', contexto)
 
-# def cadastrar_funcionario(request):
-#     funcionarios = Funcionarios.objetos.all()
-#     contexto = {"funcionario": funcionario}
-#     return render(request, 'website/detalhesFuncionario.html', contexto)
+def listar_funcionarios(request):
+    return index(request)
+
+
+def detalhes_funcionario(request, id):
+    f = get_object_or_404(Funcionarios, pk=id)
+    return render(request, 'website/detalhesFuncionario.html', {
+        "titulo": f"Detalhes | {f.nome} {f.sobrenome}",
+        "f": f
+    })
+
+# FORM para criar/editar
+def _salvar_form(request, instancia=None):
+    # Manualmente porque você ainda não tem um ModelForm neste app
+    if request.method == "POST":
+        data = request.POST
+        campos = ("nome", "sobrenome", "cpf", "tempo_de_servico", "remuneracao")
+        valores = {k: data.get(k) for k in campos}
+
+        if instancia is None:
+            instancia = Funcionarios(**valores)
+            messages.success(request, "Funcionário cadastrado com sucesso!")
+        else:
+            for k, v in valores.items():
+                setattr(instancia, k, v)
+            messages.success(request, "Funcionário atualizado com sucesso!")
+
+        instancia.save()
+        return redirect('website:detalhes', id=instancia.id)
+
+    return render(request, 'website/form_funcionario.html', {
+        "titulo": "Novo Funcionário" if instancia is None else f"Editar | {instancia.nome} {instancia.sobrenome}",
+        "f": instancia,
+        "modo": "cadastrar" if instancia is None else "editar"
+    })
+
+def cadastrar_funcionario(request):
+    return _salvar_form(request, None)
 
 def editar_funcionario(request, id):
-    if request.method == "POST":
-        nome = request.POST.get("nome")
-        sobrenome = request.POST.get("sobrenome")
-        cpf = request.POST.get("cpf")
-        tempo_de_serviço = request.POST.get("tempo_de_serviço")
-        remuneracao = request.POST.get("remuneracao")
-        
-        funcionario = Funcionarios(
-            nome =nome
-            sobrenome =sobrenome
-            cpf = cpf
-            tempo_de_serviço = tempo_de_serviço
-            remuneracao = remuneracao
-        )
-        funcionario.save()
-    return redirect("website:index", id=funcionario.id)
+    f = get_object_or_404(Funcionarios, pk=id)
+    return _salvar_form(request, f)
 
-    return render(request, 'website/detalhesFuncionario.html', contexto)
-
-
+# EXCLUIR com confirmação
 def excluir_funcionario(request, id):
-    funcionario = get_object_or_404(Funcionarios, pk=id)
-    # Exclusão imediata sem confirmação:
-    funcionario.delete()
-    return redirect('website:listar')
-
-# def excluir_funcionario(request, id):
-#     funcionario = get_object_or_404(Funcionarios, pk=id)
-#     if request.method == "POST":
-#         funcionario.delete()
-#         return redirect('website:listar')  # ou o nome de rota que lista
-#     contexto = {"funcionario": funcionario}
-#     return render(request, 'website/confirmar_excluir.html', contexto)
+    f = get_object_or_404(Funcionarios, pk=id)
+    if request.method == "POST":
+        f.delete()
+        messages.warning(request, "Funcionário excluído.")
+        return redirect('website:index')
+    return render(request, 'website/confirmar_excluir.html', {"titulo": f"Excluir | {f.nome} {f.sobrenome}", "f": f})
