@@ -1,0 +1,81 @@
+.navbar {
+    --bs-navbar-padding-y: 0.6rem;
+}
+
+.navbar .nav-link {
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+.navbar .nav-link:hover {
+    opacity: 1;
+}
+
+.navbar .nav-link.active {
+    color: #0d6efd;
+    position: relative;
+}
+
+.navbar .nav-link.active::after {
+    content: "";
+    position: absolute;
+    left: 0.5rem;
+    right: 0.5rem;
+    bottom: -0.4rem;
+    height: 2px;
+    background: #0d6efd;
+    border-radius: 2px;
+}
+
+.dropdown-menu {
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+/* navbar refinada + estado ativo */
+.navbar {
+    --bs-navbar-padding-y: .6rem;
+}
+
+.navbar .nav-link {
+    font-weight: 500;
+    opacity: .9;
+}
+
+.navbar .nav-link:hover {
+    opacity: 1;
+}
+
+.navbar .nav-link.active {
+    color: var(--bs-primary);
+    position: relative;
+}
+
+.navbar .nav-link.active::after {
+    content: "";
+    position: absolute;
+    left: .5rem;
+    right: .5rem;
+    bottom: -.45rem;
+    height: 2px;
+    background: var(--bs-primary);
+    border-radius: 2px;
+}
+
+.card {
+    border-radius: 1rem;
+}
+
+.table thead th {
+    white-space: nowrap;
+}
+
+.table td,
+.table th {
+    vertical-align: middle;
+}
+
+
+:root {
+    --bs-primary: #0d6efd;
+}
